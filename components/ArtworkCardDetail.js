@@ -1,17 +1,34 @@
 import Error from 'next/error';
+import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import useSWR from 'swr';
+import {useAtom} from 'jotai';
+import {favouritesAtom} from '@/store';
+import {useState} from 'react';
 
 //Accepts single prop objectID
 export default function ArtworkCardDetail(props) {
   const objectID = props.objectID;
 
-  const {data, error} = useSWR(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${objectID}`);
+  const [favouritesList, setFavouritesList] = useAtom(favouritesAtom);
+  const [showAdded, setShowAdded] = useState(favouritesList?.includes(objectID));
+
+  const {data, error} = useSWR(objectID ? `https://collectionapi.metmuseum.org/public/collection/v1/objects/${objectID}` : null);
 
   if (error || !data) {
     return(
       <Error statusCode={404}/>
     );
+  }
+
+  function favouritesClicked() {
+    if (showAdded) {
+      setFavouritesList(current => current.filter(fav => fav != objectID));
+      setShowAdded(false);
+    } else {
+      setFavouritesList(current => [...current, objectID]);
+      setShowAdded(true);
+    }
   }
 
   return (
@@ -27,7 +44,10 @@ export default function ArtworkCardDetail(props) {
             <br /><br />
             <strong>Artist: </strong>{data.artistDisplayName ? <>{data.artistDisplayName} (<a href={data.artistWikidata_URL} target="_blank" rel="noreferrer">wiki</a>)</>: "N/A"} <br />
             <strong>Credit Line: </strong>{data.creditLine ? data.creditLine : "N/A"} <br />
-            <strong>Dimensions: </strong>{data.dimensions ? data.dimensions : "N/A"}
+            <strong>Dimensions: </strong>{data.dimensions ? data.dimensions : "N/A"} <br /> <br />
+            <Button variant={showAdded ? "primary" : "outline-primary"} onClick={favouritesClicked}>
+              {showAdded ? "+ Favourite (added)" : "+ Favourite"}
+            </Button>
           </Card.Text>
         </Card.Body>
       </Card>
