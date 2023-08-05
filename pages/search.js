@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
 import {useAtom} from 'jotai';
 import {searchHistoryAtom} from '@/store';
+import { addToHistory } from '@/lib/userData';
 
 export default function Search() {
   const [searchHistory, setSearchHistory] = useAtom(searchHistoryAtom);
@@ -23,7 +24,7 @@ export default function Search() {
 
   const router = useRouter();
 
-  function submitForm(data, e) {
+  async function submitForm(data, e) {
     e.preventDefault();
 
     let queryString = "";
@@ -34,7 +35,7 @@ export default function Search() {
     queryString += `&isHighlight=${data.isHighlight}`;
     queryString += `&q=${data.q}`;
 
-    setSearchHistory(current => [...current, queryString]);
+    setSearchHistory(await addToHistory(queryString));
 
     router.push(`/artwork?${queryString}`);
   }

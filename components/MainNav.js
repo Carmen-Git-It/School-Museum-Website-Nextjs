@@ -9,6 +9,8 @@ import { useRouter } from 'next/router';
 import { useState } from 'react';
 import {useAtom} from 'jotai';
 import {searchHistoryAtom} from '@/store';
+import { addToHistory } from '@/lib/userData';
+import { readToken, removeToken } from '@/lib/authenticate';
 
 function MainNav() {
   const [search, setSearch] = useState('');
@@ -16,9 +18,17 @@ function MainNav() {
   const router = useRouter();
   const [searchHistory, setSearchHistory] = useAtom(searchHistoryAtom);
 
-  function submit(e){
+  let token = readToken();
+
+  function logout() {
+    setIsExpanded(false);
+    removeToken();
+    router.push('/login');
+ }
+
+  async function submit(e){
     e.preventDefault();
-    setSearchHistory(current => [...current, `title=true&q=${search}`]);
+    setSearchHistory(await addToHistory(`title=true&q=${search}`));
     setIsExpanded(false);
     router.push(`/artwork?title=true&q=${search}`)
   }
@@ -32,25 +42,31 @@ function MainNav() {
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="me-auto">
               <Link href="/" legacyBehavior passHref><Nav.Link active={router.pathname === "/"} onClick={() => {setIsExpanded(false)}}>Home</Nav.Link></Link>
-              <Link href="/search" legacyBehavior passHref><Nav.Link active={router.pathname === "/search"} onClick={() => {setIsExpanded(false)}}>Advanced Search</Nav.Link></Link>
+              {token && <Link href="/search" legacyBehavior passHref><Nav.Link active={router.pathname === "/search"} onClick={() => {setIsExpanded(false)}}>Advanced Search</Nav.Link></Link>}
             </Nav>
             &nbsp;
-            <Form className="d-flex" onSubmit={submit}>
-              <Form.Control
-                type="search"
-                placeholder="Search"
-                className="me-2"
-                aria-label="Search"
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <Button variant="success" type="submit">Search</Button>
-            </Form>
+            {!token && 
+              <Nav>
+                <Link href="/register" legacyBehavior passHref><Nav.Link onClick={()=>{setIsExpanded(false)}} active={router.pathname === "/register"}>Register</Nav.Link></Link>
+                <Link href="/login" legacyBehavior passHref><Nav.Link onClick={()=>{setIsExpanded(false)}} active={router.pathname === "/login"}>Login</Nav.Link></Link>
+              </Nav>}
+            {token && <Form className="d-flex" onSubmit={submit}>
+                <Form.Control
+                  type="search"
+                  placeholder="Search"
+                  className="me-2"
+                  aria-label="Search"
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                <Button variant="success" type="submit">Search</Button>
+              </Form>}
             &nbsp;
             <Nav>
-            <NavDropdown title="User Name" id="basic-nav-dropdown">
-              <Link href="/favourites" legacyBehavior passHref><NavDropdown.Item active={router.pathname === "/favourites"} onClick={() => {setIsExpanded(false)}}>Favourites</NavDropdown.Item></Link>
-              <Link href="/history" legacyBehavior passHref><NavDropdown.Item active={router.pathname === "/history"} onClick={() => {setIsExpanded(false)}}>Search History</NavDropdown.Item></Link>
-            </NavDropdown>
+            {token && <NavDropdown title={token.userName} id="basic-nav-dropdown">
+              <Link href="/favourites" passHref legacyBehavior><NavDropdown.Item onClick={()=>{setIsExpanded(false)}} active={router.pathname === "/favourites"}>Favourites</NavDropdown.Item></Link>
+              <Link href="/history" passHref legacyBehavior><NavDropdown.Item onClick={()=>{setIsExpanded(false)}} active={router.pathname === "/history"}>History</NavDropdown.Item></Link>
+              <NavDropdown.Item onClick={logout} >Logout</NavDropdown.Item>
+              </NavDropdown>}
             </Nav>
           </Navbar.Collapse>
         </Container>

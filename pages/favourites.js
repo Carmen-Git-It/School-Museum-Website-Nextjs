@@ -1,8 +1,8 @@
 import {useAtom} from 'jotai';
 import {favouritesAtom} from '@/store';
-import {useState} from 'react';
 import Col from 'react-bootstrap/Col';
 import Row from 'react-bootstrap/Row';
+import Card from 'react-bootstrap/Card';
 import ArtworkCard from '../components/ArtworkCard';
 
 
@@ -11,7 +11,19 @@ export default function Favourites() {
 
   if (!favouritesList) {
     return null;
-  } 
+  }
+  
+  if (favouritesList.length === 0) {
+    return(
+      <Card>
+      <Card.Body>
+          <Card.Text>
+              <h4>Nothing Here</h4> Try adding favourites!
+          </Card.Text>
+      </Card.Body>
+      </Card>
+    );
+  }
 
   let artworks = [];
   favouritesList.forEach((artwork) => {
